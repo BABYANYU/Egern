@@ -7,7 +7,8 @@ compat_arguments_desc: "NODES：待测节点名称，使用 § 分隔，须与�
 scriptings:
   - generic:
       name: "yanyu-latency"
-      script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/main/scripts/Latency.js"
+      script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/main/scripts/Latency.js?v=20261015-1"
+      update_interval: 60
       timeout: 60
 widgets:
   - name: "Latency"
