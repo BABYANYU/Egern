@@ -150,15 +150,15 @@ function render(family, policy, landing, entry, same) {
       ...(result.info && result.error ? [text(result.error, 10, '#D44835', 2)] : []) ] });
   const footer = landing.error ? `落地失败：${landing.error}` : `查询时间 ${new Date().toLocaleTimeString('zh-CN', {hour12:false})}`;
   if (String(family).startsWith('accessory')) return { type:'widget', children:[
-    text('Route', 11), text(landing.info ? '落地 ' + landing.info.ip : footer, 11, ink, 2)
+    text('✦ Yanyu · Route', 11), text(landing.info ? '落地 ' + landing.info.ip : footer, 11, ink, 2)
   ] };
   const sections = [];
   if (!same) sections.push(section('入口 · 手填参数', entry));
   sections.push(section('落地 · 自动查询', landing));
   return { type:'widget', padding:small ? 10 : 12, gap:small ? 4 : 8, backgroundColor:{light:'#F4F7FB',dark:'#101D2E'}, children:[
     { type:'stack', direction:'row', gap:6, children:[
-      {type:'image',src:'sf-symbol:globe.asia.australia',width:15,height:15,color:'#6699FF'},
-      text('Route', 14) ] },
+      text('✦', 15, '#8EAFE0'),
+      { ...text('Yanyu · Route', 14), font:{size:14, weight:'semibold'} } ] },
     { type:'stack', direction:family === 'systemSmall' ? 'column' : 'row', alignItems:'start', gap:10,
       flex:1, children:sections },
     text(footer, 9, landing.error ? '#D44835' : muted, 2)
