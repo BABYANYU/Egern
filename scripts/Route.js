@@ -136,17 +136,17 @@ function render(family, policy, landing, entry, same) {
   const text = (s, size = 11, color = ink, maxLines = 1) => ({ type:'text', text:s,
     font:{ size, weight:'medium' }, textColor:color, maxLines, minScale:0.6 });
   const details = result => result.info
-    ? `运营商：${operator(result.info.operator)}\n位置：${location(result.info)}`
-    : '';
+    ? [`运营商：${operator(result.info.operator)}`, `位置：${location(result.info)}`]
+    : [];
   const small = family === 'systemSmall';
-  const section = (label, result) => ({ type:'stack', direction:'column', alignItems:'start', gap:small ? 1 : 3, flex:1,
+  const section = (label, result) => ({ type:'stack', direction:'column', alignItems:'start', gap:2, flex:1,
     children: small ? [
       text(`${label}：${result.info ? result.info.ip : result.error}`, 10, ink, 2),
-      ...(result.info ? [text(details(result), 9, muted, 2)] : []),
+      ...details(result).map(line => text(line, 9, muted)),
       ...(result.info && result.error ? [text(result.error, 9, '#D44835')] : [])
     ] : [ text(label, 11, muted),
       text(result.info ? result.info.ip : result.error, 13, result.info ? ink : '#D44835', 2),
-      ...(result.info ? [text(details(result), 11, muted, 3)] : []),
+      ...details(result).map(line => text(line, 11, muted)),
       ...(result.info && result.error ? [text(result.error, 10, '#D44835', 2)] : []) ] });
   const footer = landing.error ? `落地失败：${landing.error}` : `查询时间 ${new Date().toLocaleTimeString('zh-CN', {hour12:false})}`;
   if (String(family).startsWith('accessory')) return { type:'widget', children:[
