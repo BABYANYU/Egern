@@ -1,6 +1,14 @@
 /** HTTPS wall-clock request sampling, not an Egern core benchmark.
  * NODES: existing policy names separated by §. No configuration/control APIs used.
  */
+const HTTPS_PROBES = [
+  'https://cp.cloudflare.com/generate_204',
+  'https://www.gstatic.com/generate_204',
+  'https://captive.apple.com/hotspot-detect.html',
+  'https://detectportal.firefox.com/success.txt',
+  'https://github.com/robots.txt'
+];
+
 export default async function(ctx) {
   const raw = String(ctx.env?.NODES || '').trim();
   const nodes = [...new Set((raw ? raw.split('§') : ['Proxy']).map(s=>s.trim()).filter(Boolean))];
@@ -9,18 +17,21 @@ export default async function(ctx) {
   // Three concurrent requests maximum; global budget leaves time to render before 60s.
   const deadline = Date.now() + 50000;
   for(let round=0;round<5;round++) {
+    // A different origin per round prevents a warm same-origin connection from
+    // turning the median into an approximation of established-connection RTT.
+    const probe=HTTPS_PROBES[round];
     let index=0;
     await Promise.all(Array.from({length:Math.min(3,nodes.length)},async()=>{
       while(index<nodes.length && Date.now()<deadline) {
         const name=nodes[index++];
         const start=Date.now();
         try {
-          const r=await ctx.http.head('https://cp.cloudflare.com/generate_204?latency='+start+'-'+round,{
+          const r=await ctx.http.head(probe+'?latency='+start+'-'+round,{
             policy:name,timeout:Math.max(1,Math.min(4000,deadline-start)),
             redirect:'error',credentials:'omit',headers:{'Cache-Control':'no-cache'}
           });
           const elapsed=Date.now()-start;
-          if(r?.status===204 && elapsed>0) samples.get(name).push(elapsed);
+          if(r?.status>=200 && r.status<300 && elapsed>0) samples.get(name).push(elapsed);
         } catch (_) { /* Errors never become successful measurements. */ }
       }
     }));
@@ -45,7 +56,7 @@ function render(family, rows) {
     text(fastest?`${fastest.name} ${Math.round(fastest.latency)} ms`:'测速失败',11,fastest?ink:'#D44835',2)
   ]};
   const small=family==='systemSmall';
-  const section=r=>({type:'stack',direction:'column',alignItems:'start',gap:small?1:3,flex:1,
+  const section=r=>({type:'stack',direction:'column',alignItems:'start',gap:2,flex:1,
     children:small?[
       text(`${r.name}：${r.latency===null?'失败':Math.round(r.latency)+' ms'}`,10,r.latency===null?'#D44835':ink,2),
       text(`抖动：${r.jitter===null?'—':format(r.jitter)+' ms'}${r.count<5?` · ${r.count}/5 样本`:''}`,9,muted,2)
