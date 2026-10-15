@@ -31,16 +31,51 @@ export default async function(ctx) {
     const latency=s.length?median(s):null;
     return {name,latency,jitter:s.length>=3?median(s.map(v=>Math.abs(v-latency))):null,count:s.length};
   }).sort((a,b)=>(a.latency??Infinity)-(b.latency??Infinity));
-  const ink={light:'#182638',dark:'#EBF1FA'}, muted={light:'#586879',dark:'#A5B3C5'};
-  const text=(s,size=11,color=ink)=>({type:'text',text:s,font:{size,weight:'medium'},textColor:color,maxLines:2,minScale:0.6});
-  return {type:'widget',padding:12,gap:7,backgroundColor:{light:'#F4F7FB',dark:'#101D2E'},children:[
-    {type:'stack',direction:'row',gap:6,children:[text('✦',15,'#8EAFE0'),{...text('Yanyu · Latency',14),font:{size:14,weight:'semibold'}}]},
-    ...rows.map(r=>({type:'stack',direction:'column',alignItems:'start',gap:2,children:[
-      text(r.name,12),text(r.latency===null?'综合延迟：失败 · 抖动：—':`综合延迟：${Math.round(r.latency)} ms · 抖动：${r.jitter===null?'样本不足':format(r.jitter)+' ms'}${r.count<5?'（部分样本）':''}`,10,muted)
-    ]})),
-    text('查询时间 '+new Date().toLocaleTimeString('zh-CN',{hour12:false}),9,muted)
-  ]};
+  return render(ctx.widgetFamily, rows);
 }
+
+function render(family, rows) {
+  const ink={light:'#182638',dark:'#EBF1FA'};
+  const muted={light:'#586879',dark:'#A5B3C5'};
+  const text=(s,size=11,color=ink,maxLines=1)=>({type:'text',text:s,
+    font:{size,weight:'medium'},textColor:color,maxLines,minScale:0.6});
+  const fastest=rows.find(r=>r.latency!==null);
+  if(String(family).startsWith('accessory')) return {type:'widget',children:[
+    text('✦ Yanyu · Latency',11),
+    text(fastest?`${fastest.name} ${Math.round(fastest.latency)} ms`:'测速失败',11,fastest?ink:'#D44835',2)
+  ]};
+  const small=family==='systemSmall';
+  const section=r=>({type:'stack',direction:'column',alignItems:'start',gap:small?1:3,flex:1,
+    children:small?[
+      text(`${r.name}：${r.latency===null?'失败':Math.round(r.latency)+' ms'}`,10,r.latency===null?'#D44835':ink,2),
+      text(`抖动：${r.jitter===null?'—':format(r.jitter)+' ms'}${r.count<5?` · ${r.count}/5 样本`:''}`,9,muted,2)
+    ]:[
+      text(r.name,11,muted,2),
+      text(r.latency===null?'失败':`${Math.round(r.latency)} ms`,13,r.latency===null?'#D44835':ink,2),
+      text(`抖动：${r.jitter===null?'—':format(r.jitter)+' ms'}${r.count<5?` · ${r.count}/5 样本`:''}`,11,muted,2)
+    ]});
+  const groups=[];
+  if(small) rows.forEach(r=>groups.push(section(r)));
+  else for(let i=0;i<rows.length;i+=2) groups.push({
+    type:'stack',direction:'row',alignItems:'start',gap:10,
+    children:[section(rows[i]),rows[i+1]?section(rows[i+1]):{type:'stack',flex:1,children:[]}]
+  });
+  return {type:'widget',padding:small?10:12,gap:small?4:8,
+    backgroundColor:{light:'#F4F7FB',dark:'#101D2E'},children:[
+      {type:'stack',direction:'row',gap:6,children:[
+        text('✦',15,'#8EAFE0'),
+        {...text('Yanyu · Latency',14),font:{size:14,weight:'semibold'}}
+      ]},
+      {type:'stack',direction:'column',alignItems:'start',gap:small?4:10,flex:1,children:groups},
+      text('查询时间 '+new Date().toLocaleTimeString('zh-CN',{hour12:false}),9,muted,2)
+    ]};
+}
+
 function median(a){const s=a.slice().sort((x,y)=>x-y),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
 function format(n){return Number.isInteger(n)?String(n):n.toFixed(1);}
-function errorWidget(message){return {type:'widget',padding:12,children:[{type:'text',text:'✦ Yanyu · Latency'},{type:'text',text:message}]};}
+function errorWidget(message){return {type:'widget',padding:12,gap:8,
+  backgroundColor:{light:'#F4F7FB',dark:'#101D2E'},children:[
+    {type:'text',text:'✦ Yanyu · Latency'},
+    {type:'text',text:message,textColor:'#D44835',maxLines:2}
+  ]};}
+
