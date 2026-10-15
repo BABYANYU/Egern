@@ -19,14 +19,16 @@ export default async function(ctx) {
         try {
           const r=await ctx.http.head(LATENCY_URL,{
             policy:name,timeout:Math.max(1,Math.min(4000,deadline-start)),
-            redirect:'error',credentials:'omit',
+            redirect:'manual',credentials:'omit',
             headers:{'Cache-Control':'no-cache','Connection':'close'}
           });
           const elapsed=Date.now()-start;
           // The fixed HTTP endpoint currently returns 301. Redirects are not
           // followed so the measurement remains HTTP-only and uses the exact URL.
           if(r?.status>=200 && r.status<400 && elapsed>0) samples.get(name).push(elapsed);
-        } catch (_) { /* Errors never become successful measurements. */ }
+        } catch (error) {
+          console.log(`[Latency] ${name} round ${round + 1}: ${String(error?.message || error)}`);
+        }
       }
     }));
     if(Date.now()>=deadline) break;
