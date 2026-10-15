@@ -152,9 +152,9 @@ function render(family, policy, landing, entry, same) {
         ? [text('\u00a0', small ? 10 : 4, muted), field]
         : [field]) };
   };
-  const footer = landing.error ? `落地失败：${landing.error}` : `查询时间 ${new Date().toLocaleTimeString('zh-CN', {hour12:false})}`;
+  const landingError = landing.error ? `落地失败：${landing.error}` : '落地查询失败';
   if (String(family).startsWith('accessory')) return { type:'widget', children:[
-    text('✦ Yanyu · Route', 11), text(landing.info ? '落地 ' + landing.info.ip : footer, 11, ink, 2)
+    text('✦ Yanyu · Route', 11), text(landing.info ? '落地 ' + landing.info.ip : landingError, 11, ink, 2)
   ] };
   const sections = [];
   if (!same) sections.push(section('入口 · 手填参数', entry));
@@ -164,7 +164,6 @@ function render(family, policy, landing, entry, same) {
       text('✦', 15, '#8EAFE0'),
       { ...text('Yanyu · Route', 14), font:{size:14, weight:'semibold'} } ] },
     { type:'stack', direction:family === 'systemSmall' ? 'column' : 'row', alignItems:'start', gap:10,
-      flex:1, children:sections },
-    text(footer, 9, landing.error ? '#D44835' : muted, 2)
+      flex:1, children:sections }
   ] };
 }
