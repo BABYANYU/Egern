@@ -75,8 +75,7 @@ function render(family, rows) {
         text('✦',15,'#8EAFE0'),
         {...text('Yanyu · Latency',14),font:{size:14,weight:'semibold'}}
       ]},
-      body,
-      text('查询时间 '+new Date().toLocaleTimeString('zh-CN',{hour12:false}),9,muted,2)
+      body
     ]};
 }
 
