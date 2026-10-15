@@ -55,24 +55,27 @@ function render(family, rows) {
   const section=r=>({type:'stack',direction:'column',alignItems:'start',gap:0,flex:1,
     children:[
       text(r.name,small?10:11,muted,2),
-      {type:'spacer',length:small?10:14},
+      text('\u00a0',small?10:12,muted),
       text(r.latency===null?'失败':`${Math.round(r.latency)} ms`,small?11:13,r.latency===null?'#D44835':ink,2),
-      {type:'spacer',length:small?10:14},
+      text('\u00a0',small?10:12,muted),
       text(`抖动：${r.jitter===null?'—':format(r.jitter)+' ms'}`,small?9:11,muted,2)
     ]});
-  const groups=[];
-  if(small) rows.forEach(r=>groups.push(section(r)));
-  else for(let i=0;i<rows.length;i+=2) groups.push({
-    type:'stack',direction:'row',alignItems:'start',gap:10,
-    children:[section(rows[i]),rows[i+1]?section(rows[i+1]):{type:'stack',flex:1,children:[]}]
-  });
+  // Use the same direct two-column body as Route. Avoid a nested row
+  // inside a start-aligned column, which narrows and indents the data area.
+  const columns=[[],[]];
+  rows.forEach((r,i)=>columns[i%2].push(section(r)));
+  const body=small
+    ? {type:'stack',direction:'column',alignItems:'start',gap:10,flex:1,children:rows.map(section)}
+    : {type:'stack',direction:'row',alignItems:'start',gap:10,flex:1,
+        children:columns.map(items=>items.length===1?items[0]:
+          {type:'stack',direction:'column',alignItems:'start',gap:14,flex:1,children:items})};
   return {type:'widget',padding:small?10:12,gap:small?4:8,
     backgroundColor:{light:'#F4F7FB',dark:'#101D2E'},children:[
       {type:'stack',direction:'row',gap:6,children:[
         text('✦',15,'#8EAFE0'),
         {...text('Yanyu · Latency',14),font:{size:14,weight:'semibold'}}
       ]},
-      {type:'stack',direction:'column',alignItems:'start',gap:small?4:10,flex:1,children:groups},
+      body,
       text('查询时间 '+new Date().toLocaleTimeString('zh-CN',{hour12:false}),9,muted,2)
     ]};
 }
