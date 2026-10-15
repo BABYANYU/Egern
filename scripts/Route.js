@@ -148,7 +148,7 @@ function render(family, policy, landing, entry, same) {
       text(result.info ? result.info.ip : result.error, 13, result.info ? ink : '#D44835', 2),
       ...(result.info ? [text(details(result), 11, muted, 3)] : []),
       ...(result.info && result.error ? [text(result.error, 10, '#D44835', 2)] : []) ] });
-  const footer = landing.error ? `落地失败：${landing.error}` : '';
+  const footer = landing.error ? `落地失败：${landing.error}` : `查询时间 ${new Date().toLocaleTimeString('zh-CN', {hour12:false})}`;
   if (String(family).startsWith('accessory')) return { type:'widget', children:[
     text('Route', 11), text(landing.info ? '落地 ' + landing.info.ip : footer, 11, ink, 2)
   ] };
@@ -161,6 +161,6 @@ function render(family, policy, landing, entry, same) {
       text('Route', 14) ] },
     { type:'stack', direction:family === 'systemSmall' ? 'column' : 'row', alignItems:'start', gap:10,
       flex:1, children:sections },
-    ...(landing.error ? [text(footer, 9, '#D44835', 2)] : [])
+    text(footer, 9, landing.error ? '#D44835' : muted, 2)
   ] };
 }
