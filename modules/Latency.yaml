@@ -1,5 +1,5 @@
 name: "Latency"
-description: "5轮 HTTP HEAD 请求耗时中位数与 MAD；固定测速地址 http://1.0.0.1/favicon.ico"
+description: "测试多个策略的 HTTP 综合延迟和抖动。"
 author: "BABYANYU"
 compat_arguments:
   NODES: ""
