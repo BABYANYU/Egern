@@ -1,5 +1,5 @@
 name: "Route"
-description: "代理落地 IP、运营商和位置；可选手填代理入口（非自动识别）"
+description: "查询代理入口和落地 IP 的运营商与位置。"
 author: "BABYANYU"
 compat_arguments:
   POLICY: "Proxy"
