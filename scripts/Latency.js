@@ -52,7 +52,7 @@ function render(family, rows) {
     text(fastest?`${fastest.name} ${Math.round(fastest.latency)} ms`:'测速失败',11,fastest?ink:'#D44835',2)
   ]};
   const small=family==='systemSmall';
-  const section=r=>({type:'stack',direction:'column',alignItems:'start',gap:2,flex:1,
+  const section=r=>({type:'stack',direction:'column',alignItems:'start',gap:small?2:14,flex:1,
     children:small?[
       text(`${r.name}：${r.latency===null?'失败':Math.round(r.latency)+' ms'}`,10,r.latency===null?'#D44835':ink,2),
       text(`抖动：${r.jitter===null?'—':format(r.jitter)+' ms'}${r.count<5?` · ${r.count}/5 样本`:''}`,9,muted,2)
