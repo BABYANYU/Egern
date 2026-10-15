@@ -149,7 +149,7 @@ function render(family, policy, landing, entry, same) {
     ];
     return { type:'stack', direction:'column', alignItems:'start', gap:0, flex:1,
       children:fields.flatMap((field, index) => index
-        ? [text('\u00a0', small ? 10 : 12, muted), field]
+        ? [text('\u00a0', small ? 10 : 4, muted), field]
         : [field]) };
   };
   const footer = landing.error ? `落地失败：${landing.error}` : `查询时间 ${new Date().toLocaleTimeString('zh-CN', {hour12:false})}`;
