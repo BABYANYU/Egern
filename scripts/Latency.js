@@ -1,13 +1,7 @@
-/** HTTPS wall-clock request sampling, not an Egern core benchmark.
+/** HTTP wall-clock request sampling, not an Egern core benchmark.
  * NODES: existing policy names separated by §. No configuration/control APIs used.
  */
-const HTTPS_PROBES = [
-  'https://cp.cloudflare.com/generate_204',
-  'https://www.gstatic.com/generate_204',
-  'https://captive.apple.com/hotspot-detect.html',
-  'https://detectportal.firefox.com/success.txt',
-  'https://github.com/robots.txt'
-];
+const LATENCY_URL = 'http://1.0.0.1/favicon.ico';
 
 export default async function(ctx) {
   const raw = String(ctx.env?.NODES || '').trim();
@@ -17,21 +11,21 @@ export default async function(ctx) {
   // Three concurrent requests maximum; global budget leaves time to render before 60s.
   const deadline = Date.now() + 50000;
   for(let round=0;round<5;round++) {
-    // A different origin per round prevents a warm same-origin connection from
-    // turning the median into an approximation of established-connection RTT.
-    const probe=HTTPS_PROBES[round];
     let index=0;
     await Promise.all(Array.from({length:Math.min(3,nodes.length)},async()=>{
       while(index<nodes.length && Date.now()<deadline) {
         const name=nodes[index++];
         const start=Date.now();
         try {
-          const r=await ctx.http.head(probe+'?latency='+start+'-'+round,{
+          const r=await ctx.http.head(LATENCY_URL,{
             policy:name,timeout:Math.max(1,Math.min(4000,deadline-start)),
-            redirect:'error',credentials:'omit',headers:{'Cache-Control':'no-cache'}
+            redirect:'error',credentials:'omit',
+            headers:{'Cache-Control':'no-cache','Connection':'close'}
           });
           const elapsed=Date.now()-start;
-          if(r?.status>=200 && r.status<300 && elapsed>0) samples.get(name).push(elapsed);
+          // The fixed HTTP endpoint currently returns 301. Redirects are not
+          // followed so the measurement remains HTTP-only and uses the exact URL.
+          if(r?.status>=200 && r.status<400 && elapsed>0) samples.get(name).push(elapsed);
         } catch (_) { /* Errors never become successful measurements. */ }
       }
     }));
