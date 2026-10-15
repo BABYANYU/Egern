@@ -1,6 +1,10 @@
 name: "Route"
 description: "代理落地 IP、运营商和位置；可选手填代理入口（非自动识别）"
 author: "BABYANYU"
+compat_arguments:
+  POLICY: "Proxy"
+  ENTRANCE_IP: ""
+compat_arguments_desc: "POLICY：查询落地使用的策略组，默认 Proxy。ENTRANCE_IP：可选手填代理入口公网 IP；不能自动读取所选节点，留空仅查询落地。不要填写密码、端口或完整节点链接。"
 scriptings:
   - generic:
       name: "egern-route"
@@ -9,3 +13,6 @@ scriptings:
 widgets:
   - name: "Route"
     script_name: "egern-route"
+    env:
+      POLICY: "{{{POLICY}}}"
+      ENTRANCE_IP: "{{{ENTRANCE_IP}}}"
