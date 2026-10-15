@@ -1,0 +1,11 @@
+name: "Route"
+description: "代理落地 IP、运营商和位置；可选手填代理入口（非自动识别）"
+author: "BABYANYU"
+scriptings:
+  - generic:
+      name: "egern-route"
+      script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/main/scripts/Route.js"
+      timeout: 15
+widgets:
+  - name: "Route"
+    script_name: "egern-route"
