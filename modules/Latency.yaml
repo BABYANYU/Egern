@@ -1,4 +1,4 @@
-name: "Yanyu Latency"
+name: "Yanyu · Latency"
 description: "5轮HTTPS HEAD请求耗时中位数与MAD；不是Surge内核测速口径"
 author: "BABYANYU"
 compat_arguments:
@@ -10,7 +10,7 @@ scriptings:
       script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/main/scripts/Latency.js"
       timeout: 60
 widgets:
-  - name: "Yanyu Latency"
+  - name: "Yanyu · Latency"
     script_name: "yanyu-latency"
     env:
       NODES: "{{{NODES}}}"
