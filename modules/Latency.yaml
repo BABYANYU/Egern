@@ -1,5 +1,5 @@
 name: "Latency"
-description: "双栏展示 HTTPS 综合延迟和抖动；脚本采用超长更新间隔，按需手动更新版本。"
+description: "测试多个策略的 HTTPS 延迟与抖动。"
 author: "BABYANYU"
 compat_arguments:
   NODES: ""
