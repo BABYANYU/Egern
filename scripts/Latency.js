@@ -69,7 +69,7 @@ function render(family, rows) {
       type: 'widget', gap: 3,
       children: family === 'accessoryInline'
         ? [text(`HTTPS · ${summary}`, 11, fastest ? INK : ERROR)]
-        : [text('HTTPS 综合延迟', 10, MUTED), text(summary, 11, fastest ? INK : ERROR, 'medium', 2)]
+        : [text('HTTPS', 10, MUTED), text(summary, 11, fastest ? INK : ERROR, 'medium', 2)]
     };
   }
 
@@ -83,7 +83,7 @@ function render(family, rows) {
         type: 'stack', direction: 'column', alignItems: 'start', height: small ? 24 : 26,
         children: [text(row.name, small ? 10 : 11, INK, 'medium', 2)]
       },
-      text('HTTPS 综合延迟', 10, MUTED),
+      text('HTTPS', 10, MUTED),
       text(row.latency === null ? '失败' : `${Math.round(row.latency)} ms`,
         small ? 21 : 24, row.latency === null ? ERROR : INK, 'semibold'),
       text(`抖动  ${row.jitter === null ? '—' : format(row.jitter) + ' ms'}`, 10, MUTED),
