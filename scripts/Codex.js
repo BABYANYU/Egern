@@ -79,7 +79,7 @@ function text(value, size = 11, color = INK, weight = 'regular', maxLines = 1) {
 function render(family, state) {
   const small = family === 'systemSmall';
   const windows = state.windows || [];
-  const summary = state.error || (windows.length ? windows.map(w => `${w.seconds === 18000 ? '5h' : '周'}已用 ${w.used}%`).join(' · ') : '未返回 5h / 周窗口');
+  const summary = state.error || (windows.length ? windows.map(w => `${w.seconds === 18000 ? '5h' : '7d'}已用 ${w.used}%`).join(' · ') : '未返回 5h / 周窗口');
   if (String(family).startsWith('accessory')) return {
     type: 'widget', gap: 3,
     children: family === 'accessoryInline'
@@ -87,11 +87,13 @@ function render(family, state) {
       : [text('Yanyu · Codex', 10, MUTED), text(summary, 11, state.error ? ERROR : INK, 'medium', 2)]
   };
   const section = w => ({
-    type: 'stack', direction: 'column', alignItems: 'start', gap: 4, flex: 1,
+    type: 'stack', direction: 'column', alignItems: 'start', gap: small ? 4 : 6, flex: 1,
     children: [
-      { type: 'stack', direction: 'column', alignItems: 'start', height: small ? 14 : 26,
-        children: [text(w.seconds === 18000 ? '5h · Codex' : '周 · Codex', small ? 10 : 11, INK, 'medium')] },
-      text(`已用 ${w.used}%`, small ? 13 : 16, INK, 'semibold'),
+      text(w.seconds === 18000 ? '5h' : '7d', small ? 10 : 11, MUTED, 'medium'),
+      { type: 'stack', direction: 'row', alignItems: 'center', gap: 5, children: [
+        text('已用', small ? 10 : 11, MUTED),
+        text(`${w.used}%`, small ? 17 : 20, INK, 'semibold')
+      ] },
       text(w.reset === null ? '重置时间未返回' : `重置 ${localTime(w.reset)}`, 10, MUTED, 'regular', 2)
     ]
   });
@@ -104,9 +106,8 @@ function render(family, state) {
         text(state.detail, 10, MUTED, 'regular', 3)
       ] : [
         ...(windows.length ? [{ type: 'stack', direction: small ? 'column' : 'row', alignItems: 'start',
-          gap: small ? 10 : 16, flex: 1, children: windows.map(section) }]
-          : [text('未返回 5h / 周窗口', 11, MUTED, 'regular', 2)]),
-        text(`${state.plan} · 查询成功 ${localTime(state.queriedAt, true)}`, 10, MUTED, 'regular', small ? 2 : 1)
+          gap: small ? 10 : 16, children: windows.map(section) }]
+          : [text('未返回 5h / 7d 窗口', 11, MUTED, 'regular', 2)])
       ])
     ]
   };
