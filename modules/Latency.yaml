@@ -8,7 +8,7 @@ scriptings:
   - generic:
       name: "yanyu-latency"
       # Pin the script revision; update this URL when releasing a new script.
-      script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/a07735b52455cc5d6d2b01b105fa61de0ad013e2/scripts/Latency.js"
+      script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/1119aa75df19a1852d9c4745a6e87f82c56a29ac/scripts/Latency.js"
       # Egern 2.20.0 supports this large interval; it is not a dedicated disable flag.
       # This controls source downloads, not the timing of latency measurements.
       update_interval: 999999999999999
