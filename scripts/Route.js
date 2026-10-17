@@ -130,40 +130,62 @@ function operator(value) {
   for (const [re, name] of rules) if (re.test(s)) return name;
   return s || '未知';
 }
-function render(family, policy, landing, entry, same) {
-  const ink = { light:'#182638', dark:'#EBF1FA' };
-  const muted = { light:'#586879', dark:'#A5B3C5' };
-  const text = (s, size = 11, color = ink, maxLines = 1) => ({ type:'text', text:s,
-    font:{ size, weight:'medium' }, textColor:color, maxLines, minScale:0.6 });
-  const details = result => result.info
-    ? [`运营商：${operator(result.info.operator)}`, `位置：${location(result.info)}`]
-    : [];
-  const small = family === 'systemSmall';
-  const section = (label, result) => {
-    const fields = [
-      text(label, small ? 10 : 11, muted),
-      text(result.info ? result.info.ip : result.error, small ? 11 : 13,
-        result.info ? ink : '#D44835', 2),
-      ...details(result).map(line => text(line, small ? 9 : 11, muted)),
-      ...(result.info && result.error ? [text(result.error, small ? 9 : 10, '#D44835', 2)] : [])
-    ];
-    return { type:'stack', direction:'column', alignItems:'start', gap:0, flex:1,
-      children:fields.flatMap((field, index) => index
-        ? [text('\u00a0', small ? 10 : 4, muted), field]
-        : [field]) };
+const INK = { light: '#182638', dark: '#EBF1FA' };
+const MUTED = { light: '#586879', dark: '#A5B3C5' };
+const BACKGROUND = { light: '#F4F7FB', dark: '#101D2E' };
+const ERROR = { light: '#B84538', dark: '#FF9C8F' };
+
+function text(value, size = 11, color = INK, weight = 'regular', maxLines = 1) {
+  return {
+    type: 'text', text: String(value), font: { size, weight },
+    textColor: color, maxLines, minScale: 0.8
   };
+}
+
+function render(family, policy, landing, entry, same) {
+  const small = family === 'systemSmall';
   const landingError = landing.error ? `落地失败：${landing.error}` : '落地查询失败';
-  if (String(family).startsWith('accessory')) return { type:'widget', children:[
-    text('✦ Yanyu · Route', 11), text(landing.info ? '落地 ' + landing.info.ip : landingError, 11, ink, 2)
-  ] };
+  if (String(family).startsWith('accessory')) {
+    const summary = landing.info ? '落地 ' + landing.info.ip : landingError;
+    return {
+      type: 'widget', gap: 3,
+      children: family === 'accessoryInline'
+        ? [text(summary, 11, landing.info ? INK : ERROR)]
+        : [text('Yanyu · Route', 10, MUTED), text(summary, 11, landing.info ? INK : ERROR, 'medium', 2)]
+    };
+  }
+
+  const section = (label, result) => ({
+    type: 'stack', direction: 'column', alignItems: 'start', gap: 4, flex: 1,
+    children: [
+      {
+        type: 'stack', direction: 'column', alignItems: 'start', height: small ? 24 : 26,
+        children: [text(label, small ? 10 : 11, INK, 'medium', 2)]
+      },
+      text('IP', 10, MUTED),
+      // Addresses need more characters than latency numbers; keep complete IPs readable.
+      text(result.info ? result.info.ip : result.error, small ? 11 : 13,
+        result.info ? INK : ERROR, 'semibold', result.info?.ip?.includes(':') ? 3 : 2),
+      ...(result.info ? [
+        text(`运营商：${operator(result.info.operator)}`, 10, MUTED, 'regular', 2),
+        text(`位置：${location(result.info)}`, 10, MUTED, 'regular', 2)
+      ] : []),
+      ...(result.info && result.error ? [text(result.error, 10, ERROR, 'regular', 2)] : [])
+    ]
+  });
+
   const sections = [];
   if (!same) sections.push(section('入口 · 手填参数', entry));
   sections.push(section('落地 · 自动查询', landing));
-  return { type:'widget', padding:small ? 10 : 12, gap:small ? 4 : 8, backgroundColor:{light:'#F4F7FB',dark:'#101D2E'}, children:[
-    { type:'stack', direction:'row', gap:6, children:[
-      text('✦', 15, '#8EAFE0'),
-      { ...text('Yanyu · Route', 14), font:{size:14, weight:'semibold'} } ] },
-    { type:'stack', direction:family === 'systemSmall' ? 'column' : 'row', alignItems:'start', gap:10,
-      flex:1, children:sections }
-  ] };
+  return {
+    type: 'widget', padding: small ? 12 : 14, gap: small ? 6 : 10,
+    backgroundColor: BACKGROUND,
+    children: [
+      text('Yanyu · Route', small ? 12 : 13, INK, 'semibold'),
+      {
+        type: 'stack', direction: small ? 'column' : 'row', alignItems: 'start',
+        gap: small ? 10 : 16, flex: 1, children: sections
+      }
+    ]
+  };
 }
