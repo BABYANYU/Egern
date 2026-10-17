@@ -1,5 +1,5 @@
 name: "Latency"
-description: "测试多个策略的 HTTPS 延迟与抖动。"
+description: "测试代理HTTPS综合延迟与抖动"
 author: "BABYANYU"
 compat_arguments:
   NODES: ""
