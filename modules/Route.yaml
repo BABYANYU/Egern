@@ -9,8 +9,6 @@ scriptings:
   - generic:
       name: "egern-route"
       script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/625ea5da54fffa4aef5a78ecf7cb0c399925cce8/scripts/Route.js"
-      # Use a long source-update interval; manual module updates can load a new revision.
-      update_interval: 999999999999999
       timeout: 15
 widgets:
   - name: "Route"
