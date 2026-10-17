@@ -1,8 +1,8 @@
-/** HTTPS wall-clock request sampling, not an Egern core benchmark.
+/** HTTP wall-clock request sampling, not an Egern core benchmark.
  * NODES: existing policy names separated by §. No configuration/control APIs used.
  * Source downloads are controlled separately by the module's update interval.
  */
-const LATENCY_URL = 'https://cp.cloudflare.com/generate_204';
+const LATENCY_URL = 'http://1.0.0.1/favicon.ico';
 const ROUNDS = 5;
 
 export default async function(ctx) {
@@ -11,7 +11,7 @@ export default async function(ctx) {
   if (!nodes.length || nodes.length > 12) return errorWidget('节点数量须为 1–12；较大列表请分批检测');
   const samples = new Map(nodes.map(name => [name, []]));
   const attempts = new Map(nodes.map(name => [name, []]));
-  console.log(`[Latency diagnostics 20261017] HTTPS HEAD ${LATENCY_URL}; values are request elapsed times, not guaranteed fresh TCP/TLS handshakes.`);
+  console.log(`[Latency diagnostics 20261017] HTTP HEAD ${LATENCY_URL}; values are request elapsed times, not guaranteed fresh TCP connections.`);
   // Preserve the sampling budget and maximum concurrency of the original widget.
   const deadline = Date.now() + 50000;
   for (let round = 0; round < ROUNDS; round++) {
@@ -30,8 +30,8 @@ export default async function(ctx) {
           });
           const elapsed = Date.now() - start;
           attempts.get(name).push({ round: round + 1, elapsedMs: elapsed, status: response?.status ?? null });
-          // A redirect or captive-portal response is not a successful probe.
-          if (response?.status === 204 && elapsed > 0) samples.get(name).push(elapsed);
+          // Count the endpoint's HTTP response, including redirects; do not follow them.
+          if (response?.status >= 200 && response.status < 400 && elapsed > 0) samples.get(name).push(elapsed);
         } catch (error) {
           attempts.get(name).push({ round: round + 1, elapsedMs: Date.now() - start, status: null, failed: true });
           console.log(`[Latency] ${name} round ${round + 1}: ${String(error?.message || error)}`);
