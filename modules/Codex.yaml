@@ -1,0 +1,23 @@
+name: "Codex"
+description: "Yanyu · Codex：只读查询账户级 Codex 5h / 周额度，非稳定公共 API"
+author: "BABYANYU"
+# Secrets are configured locally in module env; never use text substitution.
+env_schema:
+  ACCESS_TOKEN:
+    name: "Access Token"
+    description: "本地填写短期 access_token 本身，不含 Bearer。不要填 API key 或 refresh_token；请勿分享模块配置。"
+  ACCOUNT_ID:
+    name: "ChatGPT Account ID"
+    description: "与令牌匹配的 ChatGPT 账户/工作区 ID，不是用户 ID、邮箱或组织 API key。"
+  POLICY:
+    name: "请求策略"
+    description: "现有 Egern 策略组名；留空时脚本使用 Proxy。"
+    default_value: "Proxy"
+scriptings:
+  - generic:
+      name: "egern-codex"
+      script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/main/scripts/Codex.js"
+      timeout: 15
+widgets:
+  - name: "Codex"
+    script_name: "egern-codex"
