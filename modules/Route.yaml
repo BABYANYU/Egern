@@ -8,7 +8,9 @@ compat_arguments_desc: "POLICY：查询落地使用的策略组，默认 Proxy�
 scriptings:
   - generic:
       name: "egern-route"
-      script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/main/scripts/Route.js"
+      script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/78f1b9f50b64c2668c5926b2ea883dc42c5d4ff8/scripts/Route.js"
+      # Use a long source-update interval; manual module updates can load a new revision.
+      update_interval: 999999999999999
       timeout: 15
 widgets:
   - name: "Route"
