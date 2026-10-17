@@ -10,6 +10,8 @@ export default async function(ctx) {
   const nodes = [...new Set((raw ? raw.split('§') : ['Proxy']).map(s => s.trim()).filter(Boolean))];
   if (!nodes.length || nodes.length > 12) return errorWidget('节点数量须为 1–12；较大列表请分批检测');
   const samples = new Map(nodes.map(name => [name, []]));
+  const attempts = new Map(nodes.map(name => [name, []]));
+  console.log(`[Latency diagnostics 20261017] HTTPS HEAD ${LATENCY_URL}; values are request elapsed times, not guaranteed fresh TCP/TLS handshakes.`);
   // Preserve the sampling budget and maximum concurrency of the original widget.
   const deadline = Date.now() + 50000;
   for (let round = 0; round < ROUNDS; round++) {
@@ -27,9 +29,11 @@ export default async function(ctx) {
             headers: { 'Cache-Control': 'no-cache', 'Connection': 'close' }
           });
           const elapsed = Date.now() - start;
+          attempts.get(name).push({ round: round + 1, elapsedMs: elapsed, status: response?.status ?? null });
           // A redirect or captive-portal response is not a successful probe.
           if (response?.status === 204 && elapsed > 0) samples.get(name).push(elapsed);
         } catch (error) {
+          attempts.get(name).push({ round: round + 1, elapsedMs: Date.now() - start, status: null, failed: true });
           console.log(`[Latency] ${name} round ${round + 1}: ${String(error?.message || error)}`);
         }
       }
@@ -39,6 +43,7 @@ export default async function(ctx) {
   const rows = nodes.map(name => {
     const values = samples.get(name);
     const latency = values.length ? median(values) : null;
+    console.log(`[Latency] ${JSON.stringify({ policy: name, url: LATENCY_URL, method: 'HEAD', attempts: attempts.get(name), successfulSamplesMs: values, medianMs: latency })}`);
     return {
       name,
       latency,
