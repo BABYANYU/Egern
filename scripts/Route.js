@@ -155,8 +155,11 @@ function render(family, policy, landing, entry, same) {
     };
   }
 
-  const section = (label, result) => ({
+  // Shift only the entrance text; reduce the inter-column gap by the same amount.
+  const entryInset = small || same ? 0 : 10;
+  const section = (label, result, leadingInset = 0) => ({
     type: 'stack', direction: 'column', alignItems: 'start', gap: 4, flex: 1,
+    ...(leadingInset ? { padding: [0, 0, 0, leadingInset] } : {}),
     children: [
       {
         type: 'stack', direction: 'column', alignItems: 'start', height: small ? 24 : 26,
@@ -175,7 +178,7 @@ function render(family, policy, landing, entry, same) {
   });
 
   const sections = [];
-  if (!same) sections.push(section('入口 · 手填参数', entry));
+  if (!same) sections.push(section('入口 · 手填参数', entry, entryInset));
   sections.push(section('落地 · 自动查询', landing));
   return {
     type: 'widget', padding: small ? 12 : 14, gap: small ? 6 : 10,
@@ -184,7 +187,7 @@ function render(family, policy, landing, entry, same) {
       text('Yanyu · Route', small ? 12 : 13, INK, 'semibold'),
       {
         type: 'stack', direction: small ? 'column' : 'row', alignItems: 'start',
-        gap: small ? 10 : 16, flex: 1, children: sections
+        gap: small ? 10 : 16 - entryInset, flex: 1, children: sections
       }
     ]
   };
