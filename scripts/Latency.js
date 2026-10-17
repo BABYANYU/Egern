@@ -1,89 +1,126 @@
-/** HTTP wall-clock request sampling, not an Egern core benchmark.
+/** HTTPS wall-clock request sampling, not an Egern core benchmark.
  * NODES: existing policy names separated by §. No configuration/control APIs used.
+ * Source downloads are controlled separately by the module's update interval.
  */
-const LATENCY_URL = 'http://1.0.0.1/favicon.ico';
+const LATENCY_URL = 'https://cp.cloudflare.com/generate_204';
+const ROUNDS = 5;
 
 export default async function(ctx) {
   const raw = String(ctx.env?.NODES || '').trim();
-  const nodes = [...new Set((raw ? raw.split('§') : ['Proxy']).map(s=>s.trim()).filter(Boolean))];
+  const nodes = [...new Set((raw ? raw.split('§') : ['Proxy']).map(s => s.trim()).filter(Boolean))];
   if (!nodes.length || nodes.length > 12) return errorWidget('节点数量须为 1–12；较大列表请分批检测');
-  const samples = new Map(nodes.map(n=>[n,[]]));
-  // Three concurrent requests maximum; global budget leaves time to render before 60s.
+  const samples = new Map(nodes.map(name => [name, []]));
+  // Preserve the sampling budget and maximum concurrency of the original widget.
   const deadline = Date.now() + 50000;
-  for(let round=0;round<5;round++) {
-    let index=0;
-    await Promise.all(Array.from({length:Math.min(3,nodes.length)},async()=>{
-      while(index<nodes.length && Date.now()<deadline) {
-        const name=nodes[index++];
-        const start=Date.now();
+  for (let round = 0; round < ROUNDS; round++) {
+    let index = 0;
+    await Promise.all(Array.from({ length: Math.min(3, nodes.length) }, async () => {
+      while (index < nodes.length && Date.now() < deadline) {
+        const name = nodes[index++];
+        const start = Date.now();
         try {
-          const r=await ctx.http.head(LATENCY_URL,{
-            policy:name,timeout:Math.max(1,Math.min(4000,deadline-start)),
-            redirect:'manual',credentials:'omit',
-            headers:{'Cache-Control':'no-cache','Connection':'close'}
+          const response = await ctx.http.head(LATENCY_URL, {
+            policy: name,
+            timeout: Math.max(1, Math.min(4000, deadline - start)),
+            redirect: 'manual',
+            credentials: 'omit',
+            headers: { 'Cache-Control': 'no-cache', 'Connection': 'close' }
           });
-          const elapsed=Date.now()-start;
-          // The fixed HTTP endpoint currently returns 301. Redirects are not
-          // followed so the measurement remains HTTP-only and uses the exact URL.
-          if(r?.status>=200 && r.status<400 && elapsed>0) samples.get(name).push(elapsed);
+          const elapsed = Date.now() - start;
+          // A redirect or captive-portal response is not a successful probe.
+          if (response?.status === 204 && elapsed > 0) samples.get(name).push(elapsed);
         } catch (error) {
           console.log(`[Latency] ${name} round ${round + 1}: ${String(error?.message || error)}`);
         }
       }
     }));
-    if(Date.now()>=deadline) break;
+    if (Date.now() >= deadline) break;
   }
-  const rows=nodes.map(name=>{
-    const s=samples.get(name);
-    const latency=s.length?median(s):null;
-    return {name,latency,jitter:s.length>=3?median(s.map(v=>Math.abs(v-latency))):null,count:s.length};
-  }).sort((a,b)=>(a.latency??Infinity)-(b.latency??Infinity));
+  const rows = nodes.map(name => {
+    const values = samples.get(name);
+    const latency = values.length ? median(values) : null;
+    return {
+      name,
+      latency,
+      jitter: values.length >= 3 ? median(values.map(value => Math.abs(value - latency))) : null,
+      count: values.length
+    };
+  }).sort((a, b) => (a.latency ?? Infinity) - (b.latency ?? Infinity));
   return render(ctx.widgetFamily, rows);
 }
 
-function render(family, rows) {
-  const ink={light:'#182638',dark:'#EBF1FA'};
-  const muted={light:'#586879',dark:'#A5B3C5'};
-  const text=(s,size=11,color=ink,maxLines=1)=>({type:'text',text:s,
-    font:{size,weight:'medium'},textColor:color,maxLines,minScale:0.6});
-  const fastest=rows.find(r=>r.latency!==null);
-  if(String(family).startsWith('accessory')) return {type:'widget',children:[
-    text('✦ Yanyu · Latency',11),
-    text(fastest?`${fastest.name} ${Math.round(fastest.latency)} ms`:'测速失败',11,fastest?ink:'#D44835',2)
-  ]};
-  const small=family==='systemSmall';
-  const section=r=>({type:'stack',direction:'column',alignItems:'start',gap:0,flex:1,
-    children:[
-      text(r.name,small?10:11,muted,2),
-      text('\u00a0',small?10:12,muted),
-      text(r.latency===null?'失败':`${Math.round(r.latency)} ms`,small?11:13,r.latency===null?'#D44835':ink,2),
-      text('\u00a0',small?10:12,muted),
-      text(`抖动：${r.jitter===null?'—':format(r.jitter)+' ms'}`,small?9:11,muted,2)
-    ]});
-  // Use the same direct two-column body as Route. Avoid a nested row
-  // inside a start-aligned column, which narrows and indents the data area.
-  const columns=[[],[]];
-  rows.forEach((r,i)=>columns[i%2].push(section(r)));
-  const body=small
-    ? {type:'stack',direction:'column',alignItems:'start',gap:10,flex:1,children:rows.map(section)}
-    : {type:'stack',direction:'row',alignItems:'start',gap:10,flex:1,
-        children:columns.map(items=>items.length===1?items[0]:
-          {type:'stack',direction:'column',alignItems:'start',gap:14,flex:1,children:items})};
-  return {type:'widget',padding:small?10:12,gap:small?4:8,
-    backgroundColor:{light:'#F4F7FB',dark:'#101D2E'},children:[
-      {type:'stack',direction:'row',gap:6,children:[
-        text('✦',15,'#8EAFE0'),
-        {...text('Yanyu · Latency',14),font:{size:14,weight:'semibold'}}
-      ]},
-      body
-    ]};
+const INK = { light: '#182638', dark: '#EBF1FA' };
+const MUTED = { light: '#586879', dark: '#A5B3C5' };
+const BACKGROUND = { light: '#F4F7FB', dark: '#101D2E' };
+const ERROR = { light: '#B84538', dark: '#FF9C8F' };
+
+function text(value, size = 11, color = INK, weight = 'regular', maxLines = 1) {
+  return {
+    type: 'text', text: String(value), font: { size, weight },
+    textColor: color, maxLines, minScale: 0.8
+  };
 }
 
-function median(a){const s=a.slice().sort((x,y)=>x-y),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
-function format(n){return Number.isInteger(n)?String(n):n.toFixed(1);}
-function errorWidget(message){return {type:'widget',padding:12,gap:8,
-  backgroundColor:{light:'#F4F7FB',dark:'#101D2E'},children:[
-    {type:'text',text:'✦ Yanyu · Latency'},
-    {type:'text',text:message,textColor:'#D44835',maxLines:2}
-  ]};}
+function render(family, rows) {
+  const fastest = rows.find(row => row.latency !== null);
+  if (String(family).startsWith('accessory')) {
+    const summary = fastest ? `${fastest.name} ${Math.round(fastest.latency)} ms` : '测速失败';
+    return {
+      type: 'widget', gap: 3,
+      children: family === 'accessoryInline'
+        ? [text(`HTTPS · ${summary}`, 11, fastest ? INK : ERROR)]
+        : [text('HTTPS 综合延迟', 10, MUTED), text(summary, 11, fastest ? INK : ERROR, 'medium', 2)]
+    };
+  }
 
+  const small = family === 'systemSmall';
+  const limit = small ? 1 : family === 'systemLarge' ? 6 : family === 'systemExtraLarge' ? 8 : 2;
+  const visible = rows.slice(0, limit);
+  const section = row => ({
+    type: 'stack', direction: 'column', alignItems: 'start', gap: 4, flex: 1,
+    children: [
+      {
+        type: 'stack', direction: 'column', alignItems: 'start', height: small ? 24 : 26,
+        children: [text(row.name, small ? 10 : 11, INK, 'medium', 2)]
+      },
+      text('HTTPS 综合延迟', 10, MUTED),
+      text(row.latency === null ? '失败' : `${Math.round(row.latency)} ms`,
+        small ? 21 : 24, row.latency === null ? ERROR : INK, 'semibold'),
+      text(`抖动  ${row.jitter === null ? '—' : format(row.jitter) + ' ms'}`, 10, MUTED),
+      ...(row.count < ROUNDS ? [text(`有效样本 ${row.count}/${ROUNDS}`, 9, MUTED)] : [])
+    ]
+  });
+
+  const columns = [[], []];
+  visible.forEach((row, index) => columns[index % 2].push(section(row)));
+  const body = small ? section(visible[0]) : {
+    type: 'stack', direction: 'row', alignItems: 'start', gap: 16, flex: 1,
+    children: columns.filter(items => items.length).map(items => items.length === 1 ? items[0] : {
+      type: 'stack', direction: 'column', alignItems: 'start', gap: 18, flex: 1, children: items
+    })
+  };
+  return {
+    type: 'widget', padding: small ? 12 : 14, gap: small ? 6 : 10,
+    backgroundColor: BACKGROUND,
+    children: [
+      text('Yanyu · Latency', small ? 12 : 13, INK, 'semibold'),
+      body,
+      ...(rows.length > limit ? [text(`显示 ${visible.length}/${rows.length} 个节点 · 按延迟排序`, 9, MUTED)] : [])
+    ]
+  };
+}
+
+function median(values) {
+  const sorted = values.slice().sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function format(value) { return Number.isInteger(value) ? String(value) : value.toFixed(1); }
+
+function errorWidget(message) {
+  return {
+    type: 'widget', padding: 14, gap: 10, backgroundColor: BACKGROUND,
+    children: [text('Yanyu · Latency', 13, INK, 'semibold'), text(message, 11, ERROR, 'regular', 3)]
+  };
+}
