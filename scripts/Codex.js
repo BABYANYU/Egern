@@ -88,6 +88,7 @@ function render(family, state) {
   };
   const section = w => ({
     type: 'stack', direction: 'column', alignItems: 'start', gap: small ? 4 : 6, flex: 1,
+    padding: [0, 0, 0, small ? 0 : 32],
     children: [
       text(w.seconds === 18000 ? '5h' : '7d', small ? 10 : 11, MUTED, 'medium'),
       { type: 'stack', direction: 'row', alignItems: 'center', gap: 5, children: [
@@ -96,7 +97,7 @@ function render(family, state) {
       ] },
       text(w.reset === null ? '重置时间未返回' : `重置 ${localTime(w.reset)}`, 10, MUTED, 'regular', 2),
       { type: 'spacer', length: small ? 2 : 8 },
-      { type: 'image', width: small ? 110 : 128, height: 5,
+      { type: 'image', width: 110, height: 5,
         src: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="8" viewBox="0 0 200 8"><rect width="200" height="8" rx="4" fill="#586879" fill-opacity="0.28"/><rect width="${2 * w.used}" height="8" rx="4" fill="#8EAFE0"/></svg>`) },
       text(`剩余 ${Number((100 - w.used).toFixed(1))}%`, 10, MUTED, 'medium')
     ]
