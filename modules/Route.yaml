@@ -1,5 +1,5 @@
 name: "Route"
-description: "查询代理入口和落地 IP 的运营商与位置。"
+description: "查询代理入口和落地 IP 的运营商与位置"
 author: "BABYANYU"
 compat_arguments:
   POLICY: "Proxy"
