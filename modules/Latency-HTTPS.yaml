@@ -1,0 +1,20 @@
+name: "Latency"
+description: "测试代理HTTPS综合延迟与抖动"
+author: "BABYANYU"
+compat_arguments:
+  NODES: ""
+compat_arguments_desc: "NODES：待测节点名称，使用 § 分隔，须与本机名称一致。留空仅检测 Proxy。手机模块的更新间隔也请设为 999999999999999；需要新版时手动刷新模块。"
+scriptings:
+  - generic:
+      name: "yanyu-latency"
+      # Pin the script revision; update this URL when releasing a new script.
+      script_url: "https://raw.githubusercontent.com/BABYANYU/Egern/a62bcc07f014b67f696324ba916cb670f459f0a0/scripts/Latency.js"
+      # Egern 2.20.0 supports this large interval; it is not a dedicated disable flag.
+      # This controls source downloads, not the timing of latency measurements.
+      update_interval: 999999999999999
+      timeout: 60
+widgets:
+  - name: "Latency"
+    script_name: "yanyu-latency"
+    env:
+      NODES: "{{{NODES}}}"
