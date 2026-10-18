@@ -1,5 +1,5 @@
 name: "Codex"
-description: "Yanyu · Codex：只读查询账户级 Codex 5h / 周额度，非稳定公共 API"
+description: "查询 Codex 5 小时与周额度"
 author: "BABYANYU"
 # Secrets are configured locally in module env; never use text substitution.
 env_schema:
